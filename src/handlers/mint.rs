@@ -1,5 +1,6 @@
 pub use crate::models::{ConsolidatedData, Remark};
 pub use crate::resadd::ResourceConsolidated;
+pub use crate::send::ChildConsolidated;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -15,7 +16,7 @@ pub struct Mint {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NftConsolidated {
     pub changes: Vec<String>,                 //TODO fix whatever changes is
-    pub children: Vec<String>,                //TODO fix whatever children is
+    pub children: Vec<ChildConsolidated>,     //TODO fix whatever children is
     pub resources: Vec<ResourceConsolidated>, //TODO fix whatever resource is
     pub block: i64,
     pub collection: String,
