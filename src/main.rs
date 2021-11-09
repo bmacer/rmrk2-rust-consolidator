@@ -1,3 +1,5 @@
+use log::warn;
+
 use std::collections::HashMap;
 use std::fs;
 
@@ -5,11 +7,14 @@ mod handlers;
 mod models;
 mod util;
 
-use handlers::{base, create, mint, resadd};
+use handlers::{base, create, mint, resadd, send};
 use models::*;
 use util::*;
 
 fn main() {
+    env_logger::init();
+
+    warn!("Beginning parsing");
     let mut type_count = HashMap::new();
     let mut data = ConsolidatedData {
         nfts: HashMap::new(),
@@ -39,9 +44,21 @@ fn main() {
                     let version = x[2].to_string();
                     let mut resource_to_add_maybe = String::new();
                     let mut url_encoded_value = String::new();
+                    let mut recipient = String::new();
                     if method == "RESADD" {
+                        if x.len() < 5 {
+                            println!("RESADD error, not enough args: {:?}", x);
+                            continue;
+                        }
                         resource_to_add_maybe = x[3].to_string();
                         url_encoded_value = x[4].to_string();
+                    } else if method == "SEND" {
+                        if x.len() < 5 {
+                            println!("SEND error, not enough args: {:?}", x);
+                            continue;
+                        }
+                        resource_to_add_maybe = x[3].to_string();
+                        recipient = x[4].to_string();
                     } else {
                         url_encoded_value = x[3].to_string();
                     }
@@ -65,8 +82,14 @@ fn main() {
                                 call.caller,
                                 &mut data,
                             );
-                            println!("decoded: {:?}", x);
                         }
+                        "SEND" => send::handleSend(
+                            resource_to_add_maybe,
+                            recipient,
+                            v.block,
+                            call.caller,
+                            &mut data,
+                        ),
                         _ => {}
                     }
                 }
