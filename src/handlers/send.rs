@@ -16,23 +16,13 @@ pub fn handleSend(
     caller: String,
     data: &mut ConsolidatedData,
 ) {
+    let mut good = false;
     let d: Option<&mut NftConsolidated> = data.nfts.get_mut(&resource);
     match d {
         Some(v) => {
             if caller == v.rootowner {
-                let recipient_nft: Option<&mut NftConsolidated> = data.nfts.get_mut(&recipient);
-                match recipient_nft {
-                    Some(r) => {
-                        r.children.push(ChildConsolidated {
-                            equipped: String::new(),
-                            id: resource,
-                            pending: false,
-                        });
-                    }
-                    None => {
-                        println!("Recipient doesn't exist. {:?}", recipient);
-                    }
-                }
+                good = true;
+                v.owner = recipient.clone();
             } else {
                 println!("caller does not equal root owner: {:?}", resource);
             }
@@ -40,5 +30,14 @@ pub fn handleSend(
         None => {
             println!("no value found for this resource");
         }
+    }
+    if data.nfts.contains_key(&recipient) && good == true {
+        data.nfts.entry(recipient).and_modify(|r| {
+            r.children.push(ChildConsolidated {
+                equipped: String::new(),
+                id: resource,
+                pending: false,
+            });
+        });
     }
 }
