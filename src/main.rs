@@ -7,7 +7,7 @@ mod handlers;
 mod models;
 mod util;
 
-use handlers::{base, create, mint, resadd, send};
+use handlers::{base, create, equip, mint, resadd, send};
 use models::*;
 use util::*;
 
@@ -45,6 +45,8 @@ fn main() {
                     let mut resource_to_add_maybe = String::new();
                     let mut url_encoded_value = String::new();
                     let mut recipient = String::new();
+                    let mut resource = String::new();
+                    let mut slot = String::new();
                     if method == "RESADD" {
                         if x.len() < 5 {
                             println!("RESADD error, not enough args: {:?}", x);
@@ -59,6 +61,13 @@ fn main() {
                         }
                         resource_to_add_maybe = x[3].to_string();
                         recipient = x[4].to_string();
+                    } else if method == "EQUIP" {
+                        if x.len() < 5 {
+                            println!("SEND error, not enough args: {:?}", x);
+                            continue;
+                        }
+                        resource = x[3].to_string();
+                        slot = x[4].to_string();
                     } else {
                         url_encoded_value = x[3].to_string();
                     }
@@ -90,6 +99,9 @@ fn main() {
                             call.caller,
                             &mut data,
                         ),
+                        "EQUIP" => {
+                            equip::handleEquip(resource, slot, v.block, call.caller, &mut data)
+                        }
                         _ => {}
                     }
                 }
