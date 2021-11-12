@@ -37,6 +37,8 @@ pub struct ResourceConsolidated {
     pub license: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumb: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parts: Option<Vec<String>>,
 }
 
 pub fn handle_resadd(
@@ -59,6 +61,7 @@ pub fn handle_resadd(
                 slot: v.slot,
                 src: v.src,
                 thumb: v.thumb,
+                parts: v.parts,
             };
             let d = data.nfts.contains_key(&res);
             if d {

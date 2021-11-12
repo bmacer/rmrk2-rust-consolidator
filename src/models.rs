@@ -35,15 +35,3 @@ pub struct Remark {
     pub version: String,
     pub value: String,
 }
-
-// //TODO fix this isn't right just copied from Base
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Nft {
-//     pub symbol: String,
-//     pub transferrable: Option<u32>,
-//     #[serde(rename = "type")]
-//     pub media_type: String,
-//     pub issuer: String,
-//     pub parts: Vec<Part>,
-// }
-

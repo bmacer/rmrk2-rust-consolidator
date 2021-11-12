@@ -9,7 +9,7 @@ use crate::send::Change;
 pub struct Base {
     // pub id: String,
     pub symbol: String,
-    // pub transferrable: i64,
+    // pub transferable: i64,
     #[serde(rename = "type")]
     pub media_type: String,
     pub issuer: String,

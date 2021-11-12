@@ -1,5 +1,6 @@
 pub use crate::models::{ConsolidatedData, Remark};
 pub use crate::resadd::ResourceConsolidated;
+pub use crate::send::Change;
 pub use crate::send::ChildConsolidated;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -8,20 +9,20 @@ use std::collections::HashMap;
 pub struct Mint {
     pub collection: String,
     pub symbol: String,
-    pub transferrable: Option<i64>,
+    pub transferable: Option<i64>,
     pub sn: String,
     pub metadata: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NftConsolidated {
-    pub changes: Vec<String>,                 //TODO fix whatever changes is
+    pub changes: Vec<Change>,                 //TODO fix whatever changes is
     pub children: Vec<ChildConsolidated>,     //TODO fix whatever children is
     pub resources: Vec<ResourceConsolidated>, //TODO fix whatever resource is
     pub block: i64,
     pub collection: String,
     pub symbol: String,
-    pub transferrable: i64,
+    pub transferable: i64,
     pub sn: String,
     pub metadata: String,
     pub priority: Vec<String>,
@@ -48,8 +49,8 @@ pub fn handleMint(r: Remark, block: i64, caller: String, data: &mut Consolidated
                 block: block,
                 collection: v.collection,
                 symbol: v.symbol,
-                transferrable: if v.transferrable.is_some() {
-                    v.transferrable.unwrap()
+                transferable: if v.transferable.is_some() {
+                    v.transferable.unwrap()
                 } else {
                     1
                 },
