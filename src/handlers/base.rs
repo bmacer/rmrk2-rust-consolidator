@@ -3,6 +3,8 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 
+use crate::send::Change;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Base {
     // pub id: String,
@@ -27,7 +29,7 @@ pub struct Part {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BaseConsolidated {
-    pub changes: Vec<String>, //TODO fix whatever changes is
+    pub changes: Vec<Change>,
     pub block: i64,
     pub symbol: String,
     #[serde(rename = "type")]

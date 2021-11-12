@@ -9,20 +9,43 @@ pub struct ChildConsolidated {
     pub equipped: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Change {
+    pub field: String,
+    pub old: String,
+    pub new: String,
+    pub caller: String,
+    pub block: i64,
+    pub opType: String,
+}
+
 pub fn handleSend(
     resource: String,
     recipient: String,
-    _block: i64,
+    block: i64,
     caller: String,
     data: &mut ConsolidatedData,
 ) {
     let mut good = false;
+    let mut old = String::new();
+    let mut new = String::new();
+
     let d: Option<&mut NftConsolidated> = data.nfts.get_mut(&resource);
     match d {
         Some(v) => {
             if caller == v.rootowner {
                 good = true;
+                old = v.owner.clone();
+                new = recipient.clone();
                 v.owner = recipient.clone();
+                v.changes.push(Change {
+                    field: String::from("owner"),
+                    old: old,
+                    new: new,
+                    caller: caller,
+                    block: block,
+                    opType: String::from("SEND"),
+                })
             } else {
                 println!("caller does not equal root owner: {:?}", resource);
             }
