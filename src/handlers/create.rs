@@ -1,4 +1,4 @@
-pub use crate::models::{ConsolidatedData, Remark};
+pub use crate::models::{Change, ConsolidatedData, Invalid, Remark};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -10,10 +10,9 @@ pub struct Create {
     pub metadata: String,
 }
 
-//TODO fix this isn't right just copied from Base
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateConsolidated {
-    pub changes: Vec<String>, //TODO fix this not sure what it's a vec of
+    pub changes: Vec<Change>,
     pub block: i64,
     pub max: i64,
     pub issuer: String,
@@ -22,13 +21,24 @@ pub struct CreateConsolidated {
     pub metadata: String,
 }
 
-pub fn handleCreate(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
+pub fn handle_create(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
     let u = urlencoding::decode(&r.value).unwrap().into_owned();
     let dec: Result<Create, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
+            if data.collections.contains_key(&v.id.clone()) {
+                // Collection with this ID already exists.  Push invalid event.
+                data.invalid.push(Invalid {
+                    op_type: String::from("CREATE"),
+                    block: block,
+                    caller: caller,
+                    object_id: r.value,
+                    message: String::from(format!("[CREATE] Collection already exists: {}", v.id)),
+                });
+                return;
+            }
             let c = CreateConsolidated {
-                changes: Vec::new(), //TODO fix this not sure what it's a vec of
+                changes: Vec::<Change>::new(),
                 block: block,
                 max: v.max,
                 issuer: caller,
@@ -36,12 +46,16 @@ pub fn handleCreate(r: Remark, block: i64, caller: String, data: &mut Consolidat
                 id: v.id.clone(),
                 metadata: v.metadata,
             };
-            let d = data.collections.entry(v.id.clone()).or_insert(c);
-            //TODO handle checking collection stuffs
-            // data.collections.insert(v.id, c);
+            data.collections.entry(v.id.clone()).or_insert(c);
         }
         Err(e) => {
-            println!("Error with handleCreate: {:?} ::: {:?}", e, r);
+            data.invalid.push(Invalid {
+                op_type: String::from("CREATE"),
+                block: block,
+                caller: caller,
+                object_id: r.value,
+                message: String::from(format!("[CREATE] Missing values: {}", e)),
+            });
         }
     }
 }

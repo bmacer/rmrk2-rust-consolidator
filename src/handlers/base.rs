@@ -1,4 +1,4 @@
-use crate::models::{ConsolidatedData, Remark};
+use crate::models::{ConsolidatedData, Invalid, Remark};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -39,12 +39,23 @@ pub struct BaseConsolidated {
     pub parts: Vec<Part>,
 }
 
-pub fn handleBase(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
+pub fn handle_base(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
     let u = urlencoding::decode(&r.value).unwrap().into_owned();
     let dec: Result<Base, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
             let id = format!("base-{}-{}", block, v.symbol);
+            if data.bases.contains_key(&id) {
+                // Base already exists
+                data.invalid.push(Invalid {
+                    op_type: String::from("BASE"),
+                    block: block,
+                    caller: caller,
+                    object_id: r.value,
+                    message: String::from(format!("[BASE] Base already exists: {}", id)),
+                });
+                return;
+            }
             let base = BaseConsolidated {
                 block: block,
                 id: id.clone(),
@@ -54,11 +65,16 @@ pub fn handleBase(r: Remark, block: i64, caller: String, data: &mut Consolidated
                 media_type: v.media_type,
                 parts: v.parts,
             };
-            let d = data.bases.entry(id).or_insert(base);
-            // //TODO handle checking collection stuffs
+            data.bases.entry(id).or_insert(base);
         }
         Err(e) => {
-            println!("e: {:?}, handleBase remark: {:?}", e, u);
+            data.invalid.push(Invalid {
+                op_type: String::from("BASE"),
+                block: block,
+                caller: caller,
+                object_id: r.value,
+                message: String::from(format!("[BASE] Missing values: {}", e)),
+            });
         }
     }
 }

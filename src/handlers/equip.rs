@@ -1,5 +1,5 @@
 pub use crate::mint::NftConsolidated;
-pub use crate::models::{ConsolidatedData, Remark};
+pub use crate::models::{ConsolidatedData, Invalid, Remark};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -9,32 +9,89 @@ pub struct ChildConsolidated {
     pub equipped: String,
 }
 
-pub fn handleEquip(
+// DONE Fail if NFT doesn't exist
+// DONE Fail if NFT has been BURNed
+// DONE Fail if NFT is not immediate parent
+// DONE Fail if child is PENDING
+
+pub fn handle_equip(
     resource: String,
     slot: String,
-    _block: i64,
+    block: i64,
     caller: String,
     data: &mut ConsolidatedData,
 ) {
-    let mut owner = String::new();
-    match data.nfts.get(&resource) {
-        Some(v) => {
-            owner = v.owner.clone();
-        }
-        None => println!("handleEquip error: no resource found for {:?}", resource),
-    }
+    if !data.nfts.contains_key(&resource) {
+        data.invalid.push(Invalid {
+            op_type: String::from("EQUIP"),
+            block: block,
+            caller: caller,
+            object_id: resource.clone(),
+            message: String::from(format!("[EQUIP] NFT doesn't exist: {}", resource.clone())),
+        });
+        return;
+    };
 
-    match data.nfts.get_mut(&owner) {
+    if data.nfts.get(&resource).unwrap().burned != "" {
+        data.invalid.push(Invalid {
+            op_type: String::from("EQUIP"),
+            block: block,
+            caller: caller,
+            object_id: resource.clone(),
+            message: String::from(format!(
+                "[EQUIP] Can't equip on BURNed NFT: {}",
+                resource.clone()
+            )),
+        });
+        return;
+    };
+
+    if data.nfts.get(&resource).unwrap().pending {
+        data.invalid.push(Invalid {
+            op_type: String::from("EQUIP"),
+            block: block,
+            caller: caller,
+            object_id: resource.clone(),
+            message: String::from(format!(
+                "[EQUIP] Can't equip on a pending NFT: {}",
+                resource.clone()
+            )),
+        });
+        return;
+    };
+
+    let parent = data.nfts.get(&resource).unwrap().owner.clone();
+
+    match data.nfts.get_mut(&parent) {
         Some(o) => {
             for mut child in o.children.iter_mut() {
-                // println!("child: {:?}", child);
-                if child.id == resource {
+                if child.id.clone() == resource {
                     child.equipped = slot;
                     return;
                 }
-                println!("no child resource found for {:?} in {:?}", resource, owner);
             }
+            data.invalid.push(Invalid {
+                op_type: String::from("EQUIP"),
+                block: block,
+                caller: caller,
+                object_id: resource.clone(),
+                message: String::from(format!(
+                    "[EQUIP] Child not {} found in parent: {}",
+                    resource.clone(),
+                    parent.clone()
+                )),
+            });
+            return;
         }
-        None => println!("no parent resource found: {:?}", owner),
+        None => {
+            data.invalid.push(Invalid {
+                op_type: String::from("EQUIP"),
+                block: block,
+                caller: caller,
+                object_id: resource.clone(),
+                message: String::from(format!("[EQUIP] Parent {} NFT not found", parent.clone())),
+            });
+            return;
+        }
     }
 }
