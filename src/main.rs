@@ -7,7 +7,9 @@ mod handlers;
 mod models;
 mod util;
 
-use handlers::{accept, base, burn, buy, changeissuer, create, equip, list, mint, resadd, send};
+use handlers::{
+    accept, base, burn, buy, changeissuer, create, emote, equip, list, mint, resadd, send,
+};
 use models::*;
 use util::*;
 
@@ -94,13 +96,6 @@ fn main() {
                         }
                         resource_to_add_maybe = x[3].to_string();
                         recipient = x[4].to_string();
-                    } else if method == "EQUIP" {
-                        if x.len() < 5 {
-                            println!("SEND error, not enough args: {:?}", x);
-                            continue;
-                        }
-                        resource = x[3].to_string();
-                        slot = x[4].to_string();
                     } else if method == "ACCEPT" {
                         // rmrk :: ACCEPT :: 2.0.0 :: 5105000-0aff6865bed3a66b-DLEP-DL15-00000001 :: RES :: V1i6B
                         if x.len() != 6 {
@@ -139,6 +134,27 @@ fn main() {
                             call.caller.clone(),
                             &mut data,
                         );
+                    } else if method == "CREATE" {
+                        // rmrk::CREATE::2.0.0::%7B%22max%22%3A100%2C%22issuer%22%3A%22CpjsLDC1JFyrhm3ftC9Gs4QoyrkHKhZKtK7YqGTRFtTafgp%22%2C%22symbol%22%3A%22DLEP%22%2C%22id%22%3A%220aff6865bed3a66b-DLEP%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2FQmVgs8P4awhZpFXhkkgnCwBp4AdKRj3F9K58mCZ6fxvn3j%22%7D
+                        if x.len() != 4 {
+                            println!("not correct number of args for CREATE");
+                            continue 'callblock;
+                        }
+                        create::handle_create(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "EMOTE" {
+                        // RMRK::EMOTE::2.0.0::RMRK1::5105000-0aff6865bed3a66b-DLEP-DL15-00000001::1F389
+                        if x.len() != 6 {
+                            println!("not correct number of args for EMOTE");
+                            continue 'callblock;
+                        }
+                        emote::handle_emote(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "EQUIP" {
+                        if x.len() < 5 {
+                            println!("SEND error, not enough args: {:?}", x);
+                            continue;
+                        }
+                        resource = x[3].to_string();
+                        slot = x[4].to_string();
                     } else if method == "LIST" {
                         // rmrk::LIST::2.0.0::5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001::10000000000
                         if x.len() != 5 {
@@ -159,7 +175,6 @@ fn main() {
                     *count += 1;
                     match r.method.as_str() {
                         "BASE" => base::handle_base(r, v.block, call.caller, &mut data),
-                        "CREATE" => create::handle_create(r, v.block, call.caller, &mut data),
                         "MINT" => mint::handle_mint(r, v.block, call.caller, &mut data),
                         "RESADD" => {
                             resadd::handle_resadd(

@@ -21,18 +21,56 @@ pub struct CreateConsolidated {
     pub metadata: String,
 }
 
-pub fn handle_create(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
-    let u = urlencoding::decode(&r.value).unwrap().into_owned();
-    let dec: Result<Create, serde_json::Error> = serde_json::from_str(&u);
-    match dec {
+// Fail if collection already exists
+// Create collection
+
+// rmrk::CREATE::2.0.0::%7B%22max%22%3A100%2C%22issuer%22%3A%22CpjsLDC1JFyrhm3ftC9Gs4QoyrkHKhZKtK7YqGTRFtTafgp%22%2C%22symbol%22%3A%22DLEP%22%2C%22id%22%3A%220aff6865bed3a66b-DLEP%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2FQmVgs8P4awhZpFXhkkgnCwBp4AdKRj3F9K58mCZ6fxvn3j%22%7D
+
+pub fn handle_create(
+    raw_parts: Vec<&str>,
+    block: i64,
+    caller: String,
+    data: &mut ConsolidatedData,
+) {
+    let raw_create = raw_parts[3];
+    // let u = urlencoding::decode(&raw_create).unwrap().into_owned();
+    let mut u = String::new();
+    match urlencoding::decode(&raw_create) {
+        Ok(v) => {
+            u = v.into_owned();
+        }
+        Err(e) => {
+            data.invalid.push(Invalid {
+                op_type: String::from("CREATE"),
+                block: block,
+                caller: caller,
+                object_id: raw_create.to_string(),
+                message: String::from(format!("[CREATE] URL Decoding error: {}", raw_create)),
+            });
+            return;
+        }
+    }
+    let create_decoded_into_json: Result<Create, serde_json::Error> = serde_json::from_str(&u);
+    match create_decoded_into_json {
+        Err(e) => {
+            // Fail if URL decoding fails
+            data.invalid.push(Invalid {
+                op_type: String::from("CREATE"),
+                block: block,
+                caller: caller,
+                object_id: u.clone(),
+                message: String::from(format!("[CREATE] Missing values: {}", e)),
+            });
+            return;
+        }
         Ok(v) => {
             if data.collections.contains_key(&v.id.clone()) {
-                // Collection with this ID already exists.  Push invalid event.
+                // Fail if collection already exists.
                 data.invalid.push(Invalid {
                     op_type: String::from("CREATE"),
                     block: block,
                     caller: caller,
-                    object_id: r.value,
+                    object_id: v.id.clone(),
                     message: String::from(format!("[CREATE] Collection already exists: {}", v.id)),
                 });
                 return;
@@ -47,15 +85,6 @@ pub fn handle_create(r: Remark, block: i64, caller: String, data: &mut Consolida
                 metadata: v.metadata,
             };
             data.collections.entry(v.id.clone()).or_insert(c);
-        }
-        Err(e) => {
-            data.invalid.push(Invalid {
-                op_type: String::from("CREATE"),
-                block: block,
-                caller: caller,
-                object_id: r.value,
-                message: String::from(format!("[CREATE] Missing values: {}", e)),
-            });
         }
     }
 }

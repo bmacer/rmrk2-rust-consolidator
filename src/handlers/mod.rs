@@ -4,6 +4,7 @@ pub mod burn;
 pub mod buy;
 pub mod changeissuer;
 pub mod create;
+pub mod emote;
 pub mod equip;
 pub mod list;
 pub mod mint;

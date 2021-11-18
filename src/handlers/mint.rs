@@ -28,7 +28,7 @@ pub struct NftConsolidated {
     pub priority: Vec<String>,
     pub owner: String,
     pub rootowner: String,
-    pub reactions: HashMap<String, String>, //TODO fix reactions
+    pub reactions: HashMap<String, Vec<String>>,
     pub forsale: String,
     pub burned: String,
     pub properties: HashMap<String, String>, //TODO what is properties?
