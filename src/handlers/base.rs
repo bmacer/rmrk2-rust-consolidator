@@ -1,11 +1,9 @@
-use crate::models::{ConsolidatedData, Invalid, Remark};
+use crate::models::{ConsolidatedData, Invalid};
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::error::Error;
 
 use crate::send::Change;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Base {
     // pub id: String,
     pub symbol: String,
@@ -16,7 +14,7 @@ pub struct Base {
     pub parts: Vec<Part>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Part {
     #[serde(rename = "type")]
     pub part_type: String,
@@ -24,7 +22,6 @@ pub struct Part {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub equippable: Option<Vec<String>>,
     pub z: i32,
-    // src: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,27 +36,31 @@ pub struct BaseConsolidated {
     pub parts: Vec<Part>,
 }
 
-pub fn handle_base(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
-    let u = urlencoding::decode(&r.value).unwrap().into_owned();
+// rmrk::BASE::{version}::{html_encoded_json}
+pub fn handle_base(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut ConsolidatedData) {
+    let r = raw_parts[3];
+    let u = urlencoding::decode(&r).unwrap().into_owned();
     let dec: Result<Base, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
             let id = format!("base-{}-{}", block, v.symbol);
+
+            // Fail if base already exists
             if data.bases.contains_key(&id) {
-                // Base already exists
                 data.invalid.push(Invalid {
                     op_type: String::from("BASE"),
                     block: block,
                     caller: caller,
-                    object_id: r.value,
+                    object_id: r.to_string(),
                     message: String::from(format!("[BASE] Base already exists: {}", id)),
                 });
                 return;
             }
+
             let base = BaseConsolidated {
                 block: block,
                 id: id.clone(),
-                changes: Vec::new(), //TODO fix this not sure what it's a vec of
+                changes: Vec::new(),
                 issuer: caller,
                 symbol: v.symbol,
                 media_type: v.media_type,
@@ -72,7 +73,7 @@ pub fn handle_base(r: Remark, block: i64, caller: String, data: &mut Consolidate
                 op_type: String::from("BASE"),
                 block: block,
                 caller: caller,
-                object_id: r.value,
+                object_id: r.to_string(),
                 message: String::from(format!("[BASE] Missing values: {}", e)),
             });
         }

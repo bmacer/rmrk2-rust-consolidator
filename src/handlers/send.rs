@@ -9,17 +9,15 @@ pub struct ChildConsolidated {
     pub equipped: String,
 }
 
-pub fn handle_send(
-    resource: String,
-    recipient: String,
-    block: i64,
-    caller: String,
-    data: &mut ConsolidatedData,
-) {
+// rmrk::SEND::{version}::{id}::{recipient}
+pub fn handle_send(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut ConsolidatedData) {
+    let resource = raw_parts[3].to_string();
+    let recipient = raw_parts[4].to_string();
+
     let mut pending = false;
     let mut recipient_is_nft = false;
 
-    // Check if resource exists, error if not
+    // Fail if NFT doesn't exist
     if !data.nfts.contains_key(&resource) {
         data.invalid.push(Invalid {
             op_type: String::from("SEND"),
@@ -31,9 +29,7 @@ pub fn handle_send(
         return;
     }
 
-    //
-
-    // Check if sender owns resource, error if not
+    // Fail if caller isn't rootowner of NFT
     if data.nfts.get(&resource).unwrap().rootowner != caller {
         data.invalid.push(Invalid {
             op_type: String::from("SEND"),
@@ -48,11 +44,12 @@ pub fn handle_send(
         return;
     };
 
+    // Check if the recipient is an NFT.  This will affect if we update just the owner (if NFT) or the rootowner as well (if *not* NFT)
     if data.nfts.contains_key(&recipient) {
+        // Recipient is NFT (update owner field only)
         recipient_is_nft = true;
-        // Recipient is NFT
         if data.nfts.get(&recipient).unwrap().rootowner == caller {
-            // Recipient NFT is owned by sender
+            // Recipient NFT is owned by sender, update owner field and audit log change
             let mut d = data.nfts.get_mut(&resource).unwrap();
             let old_owner = d.owner.clone();
             d.owner = recipient.clone();
@@ -65,7 +62,7 @@ pub fn handle_send(
                 opType: String::from("SEND"),
             });
         } else {
-            // Recipient NFT is not owned by sender (need to update owner with pending)
+            // Recipient NFT is not owned by sender (update owner field *with pending*)
             pending = true;
             let recipient_root_owner = data.nfts.get(&recipient).unwrap().rootowner.clone();
             let mut d = data.nfts.get_mut(&resource).unwrap();
@@ -83,7 +80,7 @@ pub fn handle_send(
             });
         }
     } else {
-        // Recipient is non-NFT address (update both owner and rootowner)
+        // Recipient is non-NFT address (update both owner and rootowner and add audit log entry)
         let mut d = data.nfts.get_mut(&resource).unwrap();
         let old_owner = d.owner.clone();
         d.owner = recipient.clone();
@@ -98,7 +95,7 @@ pub fn handle_send(
         });
     }
 
-    // Update the recipient's children field
+    // Update the recipient's children field (if recipient is NFT)
     if recipient_is_nft {
         let d = data.nfts.get_mut(&recipient).unwrap();
         d.children.push(ChildConsolidated {

@@ -41,17 +41,20 @@ pub struct ResourceConsolidated {
     pub parts: Option<Vec<String>>,
 }
 
-// Done: NFT must exist
-// Done: fail if not owner of collection
-// Done: pending if not owner of NFT
+// Fail if NFT doesn't exist
+// Fail if collection doesn't exist
+// Fail if caller isn't rootowner of collection
+// Add with pending if caller isnot owner of NFT
 
 pub fn handle_resadd(
-    res: String,
-    r: Remark,
+    raw_parts: Vec<&str>,
     block: i64,
     caller: String,
     data: &mut ConsolidatedData,
 ) {
+    let res = raw_parts[3].to_string();
+    let u = raw_parts[4].to_string();
+
     // Fail if NFT doesn't exist
     if !data.nfts.contains_key(&res) {
         data.invalid.push(Invalid {
@@ -63,7 +66,8 @@ pub fn handle_resadd(
         });
         return;
     };
-    let u = urlencoding::decode(&r.value).unwrap().into_owned();
+
+    let u = urlencoding::decode(&u).unwrap().into_owned();
     let dec: Result<ResAdd, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
@@ -71,11 +75,12 @@ pub fn handle_resadd(
             let collection_name = data.nfts.get(&res).unwrap().collection.clone();
 
             if !data.collections.contains_key(&collection_name) {
+                // Fail if collection doesn't exist
                 data.invalid.push(Invalid {
                     op_type: String::from("RESADD"),
                     block: block,
                     caller: caller,
-                    object_id: r.value.clone(),
+                    object_id: u.clone(),
                     message: String::from(format!(
                         "[RESADD] Collection name doesn't exist: {}",
                         collection_name
@@ -95,7 +100,7 @@ pub fn handle_resadd(
                     op_type: String::from("RESADD"),
                     block: block,
                     caller: caller.clone(),
-                    object_id: r.value,
+                    object_id: u.clone(),
                     message: String::from(format!(
                         "[RESADD] Caller {} is not owner of collection {}",
                         caller, owner_of_collection
@@ -103,10 +108,12 @@ pub fn handle_resadd(
                 });
                 return;
             }
+
             let owner_of_nft = data.nfts.get(&res).unwrap().rootowner.clone();
 
             // Will be pending if owner of NFT is not the caller
             let pending = owner_of_nft != caller;
+
             let consolidated = ResourceConsolidated {
                 pending: pending,
                 base: v.base,
@@ -130,7 +137,7 @@ pub fn handle_resadd(
                 op_type: String::from("RESADD"),
                 block: block,
                 caller: caller,
-                object_id: r.value,
+                object_id: u,
                 message: String::from(format!("[RESADD] Missing values: {}", e)),
             });
         }

@@ -1,6 +1,5 @@
 pub use crate::models::{Change, ConsolidatedData, Invalid, Remark};
 pub use crate::resadd::ResourceConsolidated;
-// pub use crate::send::Change;
 pub use crate::send::ChildConsolidated;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -31,36 +30,62 @@ pub struct NftConsolidated {
     pub reactions: HashMap<String, Vec<String>>,
     pub forsale: String,
     pub burned: String,
-    pub properties: HashMap<String, String>, //TODO what is properties?
+    pub properties: HashMap<String, String>,
     pub pending: bool,
     pub id: String,
 }
 
-// Cannot mint NFT that already exists
-//TODO can't mint an NFT for a non-existent collection
+// Fail if NFT that already exists
+// Fail if collection doesn't exist
+// Mint (with optional recipient field)
 
-pub fn handle_mint(r: Remark, block: i64, caller: String, data: &mut ConsolidatedData) {
-    let u = urlencoding::decode(&r.value).unwrap().into_owned();
+pub fn handle_mint(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut ConsolidatedData) {
+    let recipient: String;
+    let mint_json_decoded = raw_parts[3];
+    if raw_parts.len() == 5 {
+        recipient = raw_parts[4].to_string();
+    } else {
+        recipient = caller.clone();
+    }
+    let u = urlencoding::decode(&mint_json_decoded)
+        .unwrap()
+        .into_owned();
     let dec: Result<Mint, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
             let id = format!("{}-{}-{}-{}", block, v.collection, v.symbol, v.sn);
+
+            // Fail if NFT that already exists
             if data.nfts.contains_key(&id) {
-                // NFT with this ID already exists.  Push invalid event.
                 data.invalid.push(Invalid {
                     op_type: String::from("MINT"),
                     block: block,
                     caller: caller,
-                    object_id: r.value,
+                    object_id: mint_json_decoded.to_string(),
                     message: String::from(format!("[MINT] NFT already exists: {}", id)),
                 });
                 return;
             }
 
+            // Fail if collection doesn't exist
+            if !data.collections.contains_key(&v.collection) {
+                data.invalid.push(Invalid {
+                    op_type: String::from("MINT"),
+                    block: block,
+                    caller: caller.clone(),
+                    object_id: v.collection.clone(),
+                    message: String::from(format!(
+                        "[MINT] Collection doesn't exist: {}",
+                        v.collection
+                    )),
+                });
+                return;
+            }
+
             let n = NftConsolidated {
-                changes: Vec::<Change>::new(), //TODO fix whatever changes is
-                children: Vec::<ChildConsolidated>::new(), //TODO fix whatever children is
-                resources: Vec::new(),         //TODO fix whatever resource is
+                changes: Vec::<Change>::new(),
+                children: Vec::<ChildConsolidated>::new(),
+                resources: Vec::new(),
                 block: block,
                 collection: v.collection,
                 symbol: v.symbol,
@@ -72,12 +97,12 @@ pub fn handle_mint(r: Remark, block: i64, caller: String, data: &mut Consolidate
                 sn: v.sn,
                 metadata: v.metadata,
                 priority: Vec::new(),
-                owner: caller.clone(),
-                rootowner: caller,
-                reactions: HashMap::new(), //TODO fix reactions
+                owner: recipient.clone(),
+                rootowner: recipient,
+                reactions: HashMap::new(),
                 forsale: String::from("0"),
                 burned: String::new(),
-                properties: HashMap::new(), //TODO what is properties?
+                properties: HashMap::new(),
                 pending: false,
                 id: id.clone(),
             };
@@ -88,7 +113,7 @@ pub fn handle_mint(r: Remark, block: i64, caller: String, data: &mut Consolidate
                 op_type: String::from("MINT"),
                 block: block,
                 caller: caller,
-                object_id: r.value,
+                object_id: mint_json_decoded.to_string(),
                 message: String::from(format!("[MINT] Missing values: {}", e)),
             });
         }

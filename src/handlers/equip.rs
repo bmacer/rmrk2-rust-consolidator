@@ -14,13 +14,15 @@ pub struct ChildConsolidated {
 // DONE Fail if NFT is not immediate parent
 // DONE Fail if child is PENDING
 
-pub fn handle_equip(
-    resource: String,
-    slot: String,
-    block: i64,
-    caller: String,
-    data: &mut ConsolidatedData,
-) {
+//TODO check unequipping
+
+// rmrk::EQUIP::2.0.0::5105000-0aff6865bed3a66b-DLEP-ARMOR-00000001::base_1.slot_1
+// rmrk::EQUIP::2.0.0::5105000-0aff6865bed3a66b-DLEP-ARMOR-00000001::
+
+pub fn handle_equip(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut ConsolidatedData) {
+    let resource = raw_parts[3].to_string();
+    let slot = raw_parts[4].to_string();
+
     if !data.nfts.contains_key(&resource) {
         data.invalid.push(Invalid {
             op_type: String::from("EQUIP"),

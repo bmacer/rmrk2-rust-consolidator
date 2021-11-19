@@ -8,7 +8,8 @@ mod models;
 mod util;
 
 use handlers::{
-    accept, base, burn, buy, changeissuer, create, emote, equip, list, mint, resadd, send,
+    accept, base, burn, buy, changeissuer, create, emote, equip, equippable, list, lock, mint,
+    resadd, send, setpriority,
 };
 use models::*;
 use util::*;
@@ -25,22 +26,11 @@ fn main() {
         invalid: Vec::new(),
         last_block: 0,
     };
-    // let f = fs::read_to_string("chunky-unconsolidated.txt").expect("errror reading file");
     // let f = fs::read_to_string("download.txt").expect("errror reading file");
-    // let f = fs::read_to_string("res.txt").expect("errror reading file");
-    // let f = fs::read_to_string("one.txt").expect("errror reading file");
     let f = fs::read_to_string("z-before.json").expect("errror reading file");
-    // let f = fs::read_to_string("just-two.txt").expect("errror reading file");
     let split_by_newline = f.split("\n");
 
-    // let mut wr = fs::write("hello.txt", "hi");
-    let mut wr = String::new();
-
     for line in split_by_newline {
-        // if line.contains("8949591") {
-        //     println!("line {:?}", line);
-        //     std::process::exit(0);
-        // };
         if line == "[" || line == "]" || line == "," {
             continue;
         }
@@ -58,51 +48,24 @@ fn main() {
                         println!("not enough args: {:?}", x);
                         continue 'callblock;
                     }
-                    // let vv = x[2];
-                    // if vv == "1.0.0" {
-                    //     if ones % 100000 == 0 {
-                    //         println!("ones: {:?}", ones);
-                    //     }
-                    //     ones += 1;
-                    //     continue 'callblock;
-                    // }
                     let protocol = x[0].to_string();
                     let method = x[1].to_string();
                     let version = x[2].to_string();
-                    let mut resource_to_add_maybe = String::new();
                     let mut url_encoded_value = String::new();
-                    let mut recipient = String::new();
-                    let mut resource = String::new();
-                    let mut slot = String::new();
-                    if method == "RESADD" {
-                        if x.len() < 5 {
-                            println!("RESADD error, not enough args: {:?}", x);
-                            continue;
-                        }
-                        println!("x: {:?}", x);
-                        resource_to_add_maybe = x[3].to_string();
-                        url_encoded_value = x[4].to_string();
-                        if resource_to_add_maybe.contains("ait_voucher_04.svg") {
-                            println!(
-                                "brandon: {:?}\n\n tashia {:?}",
-                                resource_to_add_maybe, url_encoded_value
-                            );
-                            std::process::exit(0);
-                        }
-                    } else if method == "SEND" {
-                        if x.len() < 5 {
-                            println!("SEND error, not enough args: {:?}", x);
-                            continue;
-                        }
-                        resource_to_add_maybe = x[3].to_string();
-                        recipient = x[4].to_string();
-                    } else if method == "ACCEPT" {
+                    if method == "ACCEPT" {
                         // rmrk :: ACCEPT :: 2.0.0 :: 5105000-0aff6865bed3a66b-DLEP-DL15-00000001 :: RES :: V1i6B
                         if x.len() != 6 {
                             println!("not enough args in ACCEPT");
                             continue 'callblock;
                         }
                         accept::handle_accept(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "BASE" {
+                        // rmrk::BASE::{version}::{html_encoded_json}
+                        if x.len() != 4 {
+                            println!("not correct number of args for BASE");
+                            continue 'callblock;
+                        }
+                        base::handle_base(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "BURN" {
                         // rmrk :: BURN :: 2.0.0 :: 5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001
                         if x.len() != 4 {
@@ -149,12 +112,21 @@ fn main() {
                         }
                         emote::handle_emote(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "EQUIP" {
+                        // rmrk::EQUIP::2.0.0::5105000-0aff6865bed3a66b-DLEP-ARMOR-00000001::
+
                         if x.len() < 5 {
                             println!("SEND error, not enough args: {:?}", x);
                             continue;
                         }
-                        resource = x[3].to_string();
-                        slot = x[4].to_string();
+                        // resource = x[3].to_string();
+                        // slot = x[4].to_string();
+                        equip::handle_equip(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "EQUIPPABLE" {
+                        if x.len() < 5 {
+                            println!("EQUIPPABLE error, not enough args: {:?}", x);
+                            continue;
+                        }
+                        equippable::handle_equippable(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "LIST" {
                         // rmrk::LIST::2.0.0::5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001::10000000000
                         if x.len() != 5 {
@@ -162,41 +134,46 @@ fn main() {
                             continue 'callblock;
                         }
                         list::handle_list(x, v.block, call.caller.clone(), &mut data);
-                    } else {
-                        url_encoded_value = x[3].to_string();
+                    } else if method == "LOCK" {
+                        // rmrk::LOCK::2.0.0::0aff6865bed3a66b-DLEP
+                        //TODO LOCK logic is not implemented
+                        if x.len() != 4 {
+                            println!("not correct number of args for LIST");
+                            continue 'callblock;
+                        }
+                        lock::handle_lock(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "MINT" {
+                        // rmrk::MINT::{version}::{html_encoded_json}::{recipient?}
+                        if x.len() != 4 && x.len() != 5 {
+                            println!("not correct number of args for MINT");
+                            continue 'callblock;
+                        }
+                        mint::handle_mint(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "RESADD" {
+                        // rmrk::RESADD::{version}::{id}::{html_encoded_json}
+                        if x.len() != 5 {
+                            println!("not correct number of args for RESADD");
+                            continue 'callblock;
+                        }
+                        resadd::handle_resadd(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "SEND" {
+                        // rmrk::SEND::{version}::{id}::{recipient}
+                        if x.len() != 5 {
+                            println!("not correct number of args for SEND");
+                            continue 'callblock;
+                        }
+                        send::handle_send(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "SETPRIORITY" {
+                        // rmrk::SETPRIORITY::2.0.0::{id}::{html_encoded_value}
+                        if x.len() != 5 {
+                            println!("not correct number of args for SETPRIORITY");
+                            continue 'callblock;
+                        }
+                        setpriority::handle_setpriority(x, v.block, call.caller.clone(), &mut data);
                     }
-                    let r = Remark {
-                        protocol: protocol,
-                        method: method,
-                        version: version,
-                        value: url_encoded_value,
-                    };
-                    let count = type_count.entry(r.method.clone()).or_insert(0);
+
+                    let count = type_count.entry(method.clone()).or_insert(0);
                     *count += 1;
-                    match r.method.as_str() {
-                        "BASE" => base::handle_base(r, v.block, call.caller, &mut data),
-                        "MINT" => mint::handle_mint(r, v.block, call.caller, &mut data),
-                        "RESADD" => {
-                            resadd::handle_resadd(
-                                resource_to_add_maybe,
-                                r,
-                                v.block,
-                                call.caller,
-                                &mut data,
-                            );
-                        }
-                        "SEND" => send::handle_send(
-                            resource_to_add_maybe,
-                            recipient,
-                            v.block,
-                            call.caller,
-                            &mut data,
-                        ),
-                        "EQUIP" => {
-                            equip::handle_equip(resource, slot, v.block, call.caller, &mut data)
-                        }
-                        _ => {}
-                    }
                 }
             }
             Err(e) => {
@@ -213,5 +190,4 @@ fn main() {
         Err(e) => println!("unable to parse back to json: {:?}", e),
     }
     println!("Total counts: {:?}", type_count);
-    // fs::write("just-two.txt", wr);
 }
