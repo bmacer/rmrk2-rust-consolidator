@@ -9,7 +9,7 @@ mod util;
 
 use handlers::{
     accept, base, burn, buy, changeissuer, create, emote, equip, equippable, list, lock, mint,
-    resadd, send, setpriority,
+    resadd, send, setpriority, setproperty,
 };
 use models::*;
 use util::*;
@@ -170,6 +170,13 @@ fn main() {
                             continue 'callblock;
                         }
                         setpriority::handle_setpriority(x, v.block, call.caller.clone(), &mut data);
+                    } else if method == "SETPROPERTY" {
+                        // rmrk::SETPROPERTY::2.0.0::{id}::{html_encoded_name}::{html_encoded_value}
+                        if x.len() != 6 {
+                            println!("not correct number of args for SETPROPERTY");
+                            continue 'callblock;
+                        }
+                        setproperty::handle_setproperty(x, v.block, call.caller.clone(), &mut data);
                     }
 
                     let count = type_count.entry(method.clone()).or_insert(0);

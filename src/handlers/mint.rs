@@ -4,6 +4,8 @@ pub use crate::send::ChildConsolidated;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use serde_json::Value;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Mint {
     pub collection: String,
@@ -11,6 +13,30 @@ pub struct Mint {
     pub transferable: Option<i64>,
     pub sn: String,
     pub metadata: String,
+    pub properties: Option<HashMap<String, Property>>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct AllowedWith {
+    #[serde(rename = "opType")]
+    op_type: String,
+    condition: Option<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Mutation {
+    pub allowed: bool,
+    with: Option<AllowedWith>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Property {
+    #[serde(rename = "_mutation")]
+    pub mutation: Mutation,
+    #[serde(rename = "type")]
+    property_type: String,
+    #[serde(flatten)]
+    pub value: HashMap<String, Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,7 +56,8 @@ pub struct NftConsolidated {
     pub reactions: HashMap<String, Vec<String>>,
     pub forsale: String,
     pub burned: String,
-    pub properties: HashMap<String, String>,
+    // pub properties: HashMap<String, String>, //TODO fix
+    pub properties: Option<HashMap<String, Property>>, //TODO fix
     pub pending: bool,
     pub id: String,
 }
@@ -50,6 +77,7 @@ pub fn handle_mint(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
     let u = urlencoding::decode(&mint_json_decoded)
         .unwrap()
         .into_owned();
+    println!("u: {:?}", u);
     let dec: Result<Mint, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
@@ -102,7 +130,8 @@ pub fn handle_mint(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
                 reactions: HashMap::new(),
                 forsale: String::from("0"),
                 burned: String::new(),
-                properties: HashMap::new(),
+                // properties: HashMap::new(),
+                properties: v.properties,
                 pending: false,
                 id: id.clone(),
             };

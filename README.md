@@ -1,4 +1,24 @@
+[X] ACCEPT
+[X] BASE
+[X] BURN
+[X] BUY
+[X] CHANGEISSUER
+[X] CREATE
+[X] EMOTE
+[X] EQUIP
+[X] EQUIPPABLE
+[X] LIST
+[N] LOCK
+[X] MINT
+[X] RESADD
+[X] SEND
+[X] SETPRIORITY
+[X] SETPROPERTY
+[ ] THEMEADD
+
 # Rust-based RMRK2.0 consolidator
+
+Requires subkey commandline utility and jq.  If you can't run `subkey --help` and `jq --help` manually, this won't work.
 
 This is an attempt to rebuild the rmrk-tools-consolidate script.
 
