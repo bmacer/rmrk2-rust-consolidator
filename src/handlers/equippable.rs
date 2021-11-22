@@ -1,5 +1,6 @@
 pub use crate::mint::NftConsolidated;
 pub use crate::models::{ConsolidatedData, Invalid, Remark};
+use log::warn;
 
 // Fail if base doesn't exist
 // Fail if caller isn't the issuer of the base
@@ -50,17 +51,13 @@ pub fn handle_equippable(
     };
 
     let first_char = changes_raw.chars().next().unwrap_or(' ');
-    println!("first: {:?}", first_char);
 
     data.bases.entry(resource).and_modify(|i| {
-        println!("i: {:?}", i);
         for part in &mut i.parts {
-            println!("part: {:?}", part);
             if part.part_type == String::from("slot") {
                 if part.id == slot {
-                    println!("OK");
                     if first_char == ' ' {
-                        println!("not sure if empty value should blank out the list, but it's not explicitly stated so just returning");
+                        warn!("not sure if empty value should blank out the list, but it's not explicitly stated so just returning");
                         return;
                     }
                     // Override * for the whole list.
@@ -75,7 +72,6 @@ pub fn handle_equippable(
                     // Add values if + used
                     if first_char == '+' {
                         for item in to_add.iter() {
-                            println!("item: {:?}", item);
                             match &mut part.equippable {
                                 Some(v) => {
                                     if !v.contains(&item.to_string()) {
@@ -90,7 +86,6 @@ pub fn handle_equippable(
                     // Subtract values if - used
                     if first_char == '-' {
                         for item in to_add.iter() {
-                            println!("item: {:?}", item);
                             match &mut part.equippable {
                                 Some(v) => {
                                     if v.contains(&item.to_string()) {
@@ -109,7 +104,6 @@ pub fn handle_equippable(
                         part.equippable = Some(vec![]);
                         for item in to_add.iter() {
                             
-                            println!("item: {:?}", item);
                             match &mut part.equippable {
                                 Some(v) => {
                                     if !v.contains(&item.to_string()) {

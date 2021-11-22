@@ -1,4 +1,5 @@
 use super::models;
+use log::debug;
 use serde_json;
 
 use std::io::prelude::*;
@@ -39,12 +40,12 @@ pub fn subkey_inspect(address: String) -> Result<String, String> {
 
     match process.stdin.unwrap().write_all(&input.stdout) {
         Err(why) => return Err(format!("couldn't write to jq stdin: {}", why)),
-        Ok(_) => println!("sent to jq"),
+        Ok(_) => debug!("sent to jq"),
     }
 
     match process.stdout.unwrap().read_to_string(&mut s) {
         Err(why) => return Err(format!("couldn't read jq stdin: {}", why)),
-        Ok(_) => println!("jq good"),
+        Ok(_) => debug!("jq good"),
     }
     match s.strip_suffix("\n") {
         Some(v) => s = v.to_string(),

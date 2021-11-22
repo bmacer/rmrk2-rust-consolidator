@@ -103,7 +103,10 @@ fn main() {
         match parsed {
             Ok(v) => {
                 if v.block < data.last_block {
-                    println!("found existing block");
+                    debug!(
+                        "block ({}) < latest block of output ({}), ignoring",
+                        v.block, data.last_block
+                    );
                     continue;
                 }
                 data.last_block = v.block;
@@ -128,21 +131,21 @@ fn main() {
                     if method == "ACCEPT" {
                         // rmrk :: ACCEPT :: 2.0.0 :: 5105000-0aff6865bed3a66b-DLEP-DL15-00000001 :: RES :: V1i6B
                         if x.len() != 6 {
-                            println!("not enough args in ACCEPT");
+                            warn!("not enough args in ACCEPT");
                             continue 'callblock;
                         }
                         accept::handle_accept(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "BASE" {
                         // rmrk::BASE::{version}::{html_encoded_json}
                         if x.len() != 4 {
-                            println!("not correct number of args for BASE");
+                            warn!("not correct number of args for BASE");
                             continue 'callblock;
                         }
                         base::handle_base(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "BURN" {
                         // rmrk :: BURN :: 2.0.0 :: 5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001
                         if x.len() != 4 {
-                            println!("not correct number of args for BURN");
+                            warn!("not correct number of args for BURN");
                             continue 'callblock;
                         }
                         burn::handle_burn(x, v.block, call.caller.clone(), &mut data);
@@ -150,14 +153,14 @@ fn main() {
                         // rmrk::BUY::2.0.0::5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001
                         // RMRK::BUY::2.0.0::6-ALICES_COLLECTION-ALICES_NFT-001::FoQJpPyadYccjavVdTWxpxU7rUEaYhfLCPwXgkfD6Zat9QP
                         if x.len() != 4 && x.len() != 5 {
-                            println!("not correct number of args for BUY");
+                            warn!("not correct number of args for BUY");
                             continue 'callblock;
                         }
                         buy::handle_buy(x, call.extras, v.block, call.caller.clone(), &mut data);
                     } else if method == "CHANGEISSUER" {
                         // rmrk::CHANGEISSUER::2.0.0::0aff6865bed3a66b-DLEP::HviHUSkM5SknXzYuPCSfst3CXK4Yg6SWeroP6TdTZBZJbVT
                         if x.len() != 5 {
-                            println!("not correct number of args for CHANGEISSUER");
+                            warn!("not correct number of args for CHANGEISSUER");
                             continue 'callblock;
                         }
                         changeissuer::handle_changeissuer(
@@ -169,14 +172,14 @@ fn main() {
                     } else if method == "CREATE" {
                         // rmrk::CREATE::2.0.0::%7B%22max%22%3A100%2C%22issuer%22%3A%22CpjsLDC1JFyrhm3ftC9Gs4QoyrkHKhZKtK7YqGTRFtTafgp%22%2C%22symbol%22%3A%22DLEP%22%2C%22id%22%3A%220aff6865bed3a66b-DLEP%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2FQmVgs8P4awhZpFXhkkgnCwBp4AdKRj3F9K58mCZ6fxvn3j%22%7D
                         if x.len() != 4 {
-                            println!("not correct number of args for CREATE");
+                            warn!("not correct number of args for CREATE");
                             continue 'callblock;
                         }
                         create::handle_create(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "EMOTE" {
                         // RMRK::EMOTE::2.0.0::RMRK1::5105000-0aff6865bed3a66b-DLEP-DL15-00000001::1F389
                         if x.len() != 6 {
-                            println!("not correct number of args for EMOTE");
+                            warn!("not correct number of args for EMOTE");
                             continue 'callblock;
                         }
                         emote::handle_emote(x, v.block, call.caller.clone(), &mut data);
@@ -184,7 +187,7 @@ fn main() {
                         // rmrk::EQUIP::2.0.0::5105000-0aff6865bed3a66b-DLEP-ARMOR-00000001::
 
                         if x.len() < 5 {
-                            println!("SEND error, not enough args: {:?}", x);
+                            warn!("SEND error, not enough args: {:?}", x);
                             continue;
                         }
                         // resource = x[3].to_string();
@@ -192,14 +195,14 @@ fn main() {
                         equip::handle_equip(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "EQUIPPABLE" {
                         if x.len() < 5 {
-                            println!("EQUIPPABLE error, not enough args: {:?}", x);
+                            warn!("EQUIPPABLE error, not enough args: {:?}", x);
                             continue;
                         }
                         equippable::handle_equippable(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "LIST" {
                         // rmrk::LIST::2.0.0::5105000-0aff6865bed3a66b-VALHELLO-POTION_HEAL-00000001::10000000000
                         if x.len() != 5 {
-                            println!("not correct number of args for LIST");
+                            warn!("not correct number of args for LIST");
                             continue 'callblock;
                         }
                         list::handle_list(x, v.block, call.caller.clone(), &mut data);
@@ -207,42 +210,42 @@ fn main() {
                         // rmrk::LOCK::2.0.0::0aff6865bed3a66b-DLEP
                         //TODO LOCK logic is not implemented
                         if x.len() != 4 {
-                            println!("not correct number of args for LIST");
+                            warn!("not correct number of args for LOCK");
                             continue 'callblock;
                         }
                         lock::handle_lock(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "MINT" {
                         // rmrk::MINT::{version}::{html_encoded_json}::{recipient?}
                         if x.len() != 4 && x.len() != 5 {
-                            println!("not correct number of args for MINT");
+                            warn!("not correct number of args for MINT");
                             continue 'callblock;
                         }
                         mint::handle_mint(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "RESADD" {
                         // rmrk::RESADD::{version}::{id}::{html_encoded_json}
                         if x.len() != 5 {
-                            println!("not correct number of args for RESADD");
+                            warn!("not correct number of args for RESADD");
                             continue 'callblock;
                         }
                         resadd::handle_resadd(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "SEND" {
                         // rmrk::SEND::{version}::{id}::{recipient}
                         if x.len() != 5 {
-                            println!("not correct number of args for SEND");
+                            warn!("not correct number of args for SEND");
                             continue 'callblock;
                         }
                         send::handle_send(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "SETPRIORITY" {
                         // rmrk::SETPRIORITY::2.0.0::{id}::{html_encoded_value}
                         if x.len() != 5 {
-                            println!("not correct number of args for SETPRIORITY");
+                            warn!("not correct number of args for SETPRIORITY");
                             continue 'callblock;
                         }
                         setpriority::handle_setpriority(x, v.block, call.caller.clone(), &mut data);
                     } else if method == "SETPROPERTY" {
                         // rmrk::SETPROPERTY::2.0.0::{id}::{html_encoded_name}::{html_encoded_value}
                         if x.len() != 6 {
-                            println!("not correct number of args for SETPROPERTY");
+                            warn!("not correct number of args for SETPROPERTY");
                             continue 'callblock;
                         }
                         setproperty::handle_setproperty(x, v.block, call.caller.clone(), &mut data);
@@ -250,7 +253,7 @@ fn main() {
                         // rmrk::THEMEADD::{version}::{base_id}::{name}::{html_encoded_json}
                         //TODO THEMEADD logic is not implemented
                         if x.len() != 6 {
-                            println!("not correct number of args for THEMEADD");
+                            warn!("not correct number of args for THEMEADD");
                             continue 'callblock;
                         }
                         themeadd::handle_themeadd(x, v.block, call.caller.clone(), &mut data);
@@ -271,7 +274,7 @@ fn main() {
         Ok(v) => {
             std::fs::write(output, v).expect("writing to json failed");
         }
-        Err(e) => println!("unable to parse back to json: {:?}", e),
+        Err(e) => warn!("unable to parse back to json: {:?}", e),
     }
     println!("Total counts: {:?}", type_count);
 }

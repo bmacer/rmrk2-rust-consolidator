@@ -39,7 +39,6 @@ pub fn handle_burn(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
     let mut burned_family = Vec::<String>::new();
 
     recursive_delete(nft_to_burn.to_string(), data, &mut burned_family);
-    println!("burned family: {:?}", burned_family);
     for member in burned_family {
         data.nfts.get_mut(&member).unwrap().burned = String::from("true");
     }

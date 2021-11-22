@@ -53,7 +53,6 @@ pub fn handle_accept(
     caller: String,
     data: &mut ConsolidatedData,
 ) {
-    println!("accepting");
     let accepting_nft = raw_parts[3];
     let acceptance_type = raw_parts[4];
     let accepted_id = raw_parts[5];
