@@ -1,3 +1,7 @@
+[X] Accept input argument
+[X] Accept --output argument
+[X] Load --output arg if exists (for appending)
+
 [X] ACCEPT
 [X] BASE
 [X] BURN
@@ -14,7 +18,7 @@
 [X] SEND
 [X] SETPRIORITY
 [X] SETPROPERTY
-[ ] THEMEADD
+[N] THEMEADD
 
 # Rust-based RMRK2.0 consolidator
 

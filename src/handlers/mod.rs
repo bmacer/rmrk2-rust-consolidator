@@ -14,3 +14,4 @@ pub mod resadd;
 pub mod send;
 pub mod setpriority;
 pub mod setproperty;
+pub mod themeadd;

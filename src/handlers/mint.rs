@@ -77,7 +77,6 @@ pub fn handle_mint(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
     let u = urlencoding::decode(&mint_json_decoded)
         .unwrap()
         .into_owned();
-    println!("u: {:?}", u);
     let dec: Result<Mint, serde_json::Error> = serde_json::from_str(&u);
     match dec {
         Ok(v) => {
