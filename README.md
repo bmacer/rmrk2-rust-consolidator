@@ -1,33 +1,9 @@
-[X] Accept input argument
-[X] Accept --output argument
-[X] Load --output arg if exists (for appending)
-
-[X] ACCEPT
-[X] BASE
-[X] BURN
-[X] BUY
-[X] CHANGEISSUER
-[X] CREATE
-[X] EMOTE
-[X] EQUIP
-[X] EQUIPPABLE
-[X] LIST
-[N] LOCK
-[X] MINT
-[X] RESADD
-[X] SEND
-[X] SETPRIORITY
-[X] SETPROPERTY
-[N] THEMEADD
-
 # Rust-based RMRK2.0 consolidator
 
-Requires subkey commandline utility and jq.  If you can't run `subkey --help` and `jq --help` manually, this won't work.
+This is a Rust-built tool that is built to be equivalent to Typescript-built [https://github.com/rmrk-team/rmrk-tools](rmrk-tools-consolidate).  It works for RMRK2.0 only.
 
-This is an attempt to rebuild the rmrk-tools-consolidate script.
+## Requirements
+Requires subkey commandline utility and jq.  If you can't run `subkey --help` and `jq --help` manually, this won't work.  Installation instructions are [here](https://docs.substrate.io/v3/tools/subkey/).
 
-Phase one is to create a positive case, where this consolidator produces the same results in the Chunky example.
-Phase two is to figure out the positive cases not included in the Chunky example.
-Phase three is figuring out the failure cases.
+There will be a rmrk2-rust-consolidate executable in /dist, built for Mac.  Or, clone the repository, install with Cargo (install Rust first) with `cargo build --release`.  Then the executable will live at ./target/release/rmrk2-rust-consolidator.
 
-at this point, to run, just `cargo run` inside the main folder.  the input is hard-coded as `chunky-unconsolidated.txt` and will output to `chunky-unconsolidated.json`.  the test for phase one is comparing this output to `chunky-perfect.json`.
