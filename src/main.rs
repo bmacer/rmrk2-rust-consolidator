@@ -37,7 +37,14 @@ fn main() {
         .get_matches();
 
     let input = matches.value_of("INPUT").unwrap();
-    let default_output = format!("consolidated-{}", input);
+
+    let mut parts: Vec<&str> = input.split("/").collect();
+    let index = parts.len() - 1;
+    let formatted_filename = format!("consolidated-{}", parts[index]);
+    parts[index] = &formatted_filename;
+    let default_output = parts.join("/");
+
+    // let default_output = format!("consolidated-{}", input);
     let output = matches.value_of("OUTPUT").unwrap_or(&default_output);
 
     let mut type_count = HashMap::new();
