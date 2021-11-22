@@ -1,5 +1,3 @@
-use serde_derive::{Deserialize, Serialize};
-
 pub use crate::models::{ConsolidatedData, Invalid, Remark};
 
 // rmrk::THEMEADD::{version}::{base_id}::{name}::{html_encoded_json})

@@ -48,6 +48,6 @@ pub fn handle_list(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
         new: price.to_string(),
         caller: caller.clone(),
         block: block,
-        opType: String::from("LIST"),
+        op_type: String::from("LIST"),
     });
 }

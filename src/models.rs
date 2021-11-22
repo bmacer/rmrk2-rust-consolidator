@@ -53,5 +53,6 @@ pub struct Change {
     pub new: String,
     pub caller: String,
     pub block: i64,
-    pub opType: String,
+    #[serde(rename = "opType")]
+    pub op_type: String,
 }

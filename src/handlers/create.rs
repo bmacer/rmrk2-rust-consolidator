@@ -33,8 +33,7 @@ pub fn handle_create(
     data: &mut ConsolidatedData,
 ) {
     let raw_create = raw_parts[3];
-    // let u = urlencoding::decode(&raw_create).unwrap().into_owned();
-    let mut u = String::new();
+    let u: String;
     match urlencoding::decode(&raw_create) {
         Ok(v) => {
             u = v.into_owned();
@@ -45,7 +44,7 @@ pub fn handle_create(
                 block: block,
                 caller: caller,
                 object_id: raw_create.to_string(),
-                message: String::from(format!("[CREATE] URL Decoding error: {}", raw_create)),
+                message: String::from(format!("[CREATE] URL Decoding error: {} {}", raw_create, e)),
             });
             return;
         }

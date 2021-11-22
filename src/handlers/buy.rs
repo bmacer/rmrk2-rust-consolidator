@@ -23,12 +23,11 @@ pub fn handle_buy(
     data: &mut ConsolidatedData,
 ) {
     let nft_to_buy = raw_parts[3];
-    let mut nft_recipient = String::new();
+    let mut nft_recipient = caller.clone();
     if raw_parts.len() == 5 {
         nft_recipient = raw_parts[4].to_string();
-    } else {
-        nft_recipient = caller.clone();
     }
+
     // Fail if NFT doesn't exist
     if !data.nfts.contains_key(nft_to_buy) {
         data.invalid.push(Invalid {
@@ -85,12 +84,9 @@ pub fn handle_buy(
             return;
         }
         Some(extra) => {
-            println!("extra: {:?}", extra);
             for ex in extra {
-                println!("extra: {:?}", ex);
                 if ex.call == "balances.transfer" {
                     if ex.value.contains(",") {
-                        println!("ok so far");
                         let split: Vec<&str> = ex.value.split(",").collect();
                         let balance_receiver = split[0];
                         let sent_amount = split[1];
@@ -137,7 +133,7 @@ pub fn handle_buy(
         new: String::from("0"),
         caller: caller.clone(),
         block: block,
-        opType: String::from("BUY"),
+        op_type: String::from("BUY"),
     });
 
     // Add change audit log for owner
@@ -147,7 +143,7 @@ pub fn handle_buy(
         new: nft_recipient,
         caller: caller.clone(),
         block: block,
-        opType: String::from("BUY"),
+        op_type: String::from("BUY"),
     });
 }
 

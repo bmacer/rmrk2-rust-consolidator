@@ -59,7 +59,7 @@ pub fn handle_send(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
                 new: recipient.clone(),
                 caller: caller.clone(),
                 block: block,
-                opType: String::from("SEND"),
+                op_type: String::from("SEND"),
             });
         } else {
             // Recipient NFT is not owned by sender (update owner field *with pending*)
@@ -76,7 +76,7 @@ pub fn handle_send(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
                 new: recipient.clone(),
                 caller: caller.clone(),
                 block: block,
-                opType: String::from("SEND"),
+                op_type: String::from("SEND"),
             });
         }
     } else {
@@ -91,7 +91,7 @@ pub fn handle_send(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
             new: recipient.clone(),
             caller: caller.clone(),
             block: block,
-            opType: String::from("SEND"),
+            op_type: String::from("SEND"),
         });
     }
 

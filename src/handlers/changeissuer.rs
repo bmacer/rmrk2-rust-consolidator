@@ -16,8 +16,8 @@ pub fn handle_changeissuer(
 ) {
     let affected_base_or_collection = raw_parts[3];
     let new_issuer = raw_parts[4];
-    let mut base_exists = data.bases.contains_key(affected_base_or_collection);
-    let mut collection_exists = data.collections.contains_key(affected_base_or_collection);
+    let base_exists = data.bases.contains_key(affected_base_or_collection);
+    let collection_exists = data.collections.contains_key(affected_base_or_collection);
     if !base_exists && !collection_exists {
         data.invalid.push(Invalid {
             op_type: String::from("CHANGEISSUER"),
@@ -64,7 +64,7 @@ pub fn handle_changeissuer(
             new: new_issuer.to_string(),
             caller: caller.clone(),
             block: block,
-            opType: String::from("CHANGEISSUER"),
+            op_type: String::from("CHANGEISSUER"),
         });
         return;
     }
@@ -102,7 +102,7 @@ pub fn handle_changeissuer(
             new: new_issuer.to_string(),
             caller: caller.clone(),
             block: block,
-            opType: String::from("CHANGEISSUER"),
+            op_type: String::from("CHANGEISSUER"),
         });
     }
 }

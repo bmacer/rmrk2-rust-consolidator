@@ -1,41 +1,33 @@
-use log::warn;
-
+extern crate clap;
+use clap::{App, Arg};
+use handlers::{
+    accept, base, burn, buy, changeissuer, create, emote, equip, equippable, list, lock, mint,
+    resadd, send, setpriority, setproperty, themeadd,
+};
+use log::{debug, warn};
+use models::*;
 use std::collections::HashMap;
 use std::fs;
-
-extern crate clap;
-use clap::{App, Arg, SubCommand};
+use util::*;
 
 mod handlers;
 mod models;
 mod util;
 
-use handlers::{
-    accept, base, burn, buy, changeissuer, create, emote, equip, equippable, list, lock, mint,
-    resadd, send, setpriority, setproperty, themeadd,
-};
-use models::*;
-use util::*;
-
-pub fn load_data(s: String) -> Result<ConsolidatedData, serde_json::Error> {
-    let d = serde_json::from_str(&s);
-    d
-}
-
 fn main() {
     env_logger::init();
+    debug!("Beginning parsing");
 
     let matches = App::new("RMRK2.0 Consolidator (written in Rust)")
         .version("1.0")
         .author("Brandon Macer <bobbysox322@gmail.com>")
         .about("Converts a raw RMRK2.0 dump into a consolidated JSON file")
         .arg(
-            Arg::with_name("output")
+            Arg::with_name("OUTPUT")
                 .short("a")
                 .long("append")
-                // .value_name("input")
-                .help("the output file (will append if exists or write if not)")
-                .takes_value(true), // .required(true),
+                .help("the output file (will append if exists or write if not).  If this arg is not passed it will default to 'consolidated-<INPUT-FILENAME>'")
+                .takes_value(true),
         )
         .arg(
             Arg::with_name("INPUT")
@@ -44,12 +36,10 @@ fn main() {
         )
         .get_matches();
 
-    // Gets a value for config if supplied by user, or defaults to "default.conf"
     let input = matches.value_of("INPUT").unwrap();
     let default_output = format!("consolidated-{}", input);
-    let output = matches.value_of("output").unwrap_or(&default_output);
+    let output = matches.value_of("OUTPUT").unwrap_or(&default_output);
 
-    warn!("Beginning parsing");
     let mut type_count = HashMap::new();
     let mut data: ConsolidatedData;
 
@@ -124,13 +114,17 @@ fn main() {
                     let s = sp.split("::");
                     let x: Vec<&str> = s.collect();
                     if x.len() < 3 {
-                        println!("not enough args: {:?}", x);
+                        warn!("Not enough arguments ({}) in line: {:?}", x.len(), x);
                         continue 'callblock;
                     }
-                    let protocol = x[0].to_string();
+                    let _protocol = x[0].to_string();
                     let method = x[1].to_string();
                     let version = x[2].to_string();
-                    let mut url_encoded_value = String::new();
+                    if version != "2.0.0" {
+                        warn!("Line is not RMRK2.0, ignoring");
+                        continue;
+                    }
+                    let _url_encoded_value = String::new();
                     if method == "ACCEPT" {
                         // rmrk :: ACCEPT :: 2.0.0 :: 5105000-0aff6865bed3a66b-DLEP-DL15-00000001 :: RES :: V1i6B
                         if x.len() != 6 {
@@ -267,8 +261,8 @@ fn main() {
                 }
             }
             Err(e) => {
-                println!("error! {}", e);
-                println!("line: {:?}\n\n", line);
+                warn!("error:::{}", e);
+                warn!("line:::{}", line);
             }
         }
     }

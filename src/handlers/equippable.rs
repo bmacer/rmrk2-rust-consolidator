@@ -1,6 +1,5 @@
 pub use crate::mint::NftConsolidated;
 pub use crate::models::{ConsolidatedData, Invalid, Remark};
-use serde_derive::{Deserialize, Serialize};
 
 // Fail if base doesn't exist
 // Fail if caller isn't the issuer of the base

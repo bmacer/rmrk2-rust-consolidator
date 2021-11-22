@@ -4,6 +4,7 @@ pub use crate::send::ChildConsolidated;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use log::debug;
 use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -67,6 +68,7 @@ pub struct NftConsolidated {
 // Mint (with optional recipient field)
 
 pub fn handle_mint(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut ConsolidatedData) {
+    debug!("block {} calling for MINT", block);
     let recipient: String;
     let mint_json_decoded = raw_parts[3];
     if raw_parts.len() == 5 {
