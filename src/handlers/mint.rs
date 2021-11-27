@@ -13,7 +13,7 @@ pub struct Mint {
     pub symbol: String,
     pub transferable: Option<i64>,
     pub sn: String,
-    pub metadata: String,
+    pub metadata: Option<String>,
     pub properties: Option<HashMap<String, Property>>,
 }
 
@@ -33,9 +33,9 @@ pub struct Mutation {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Property {
     #[serde(rename = "_mutation")]
-    pub mutation: Mutation,
+    pub mutation: Option<Mutation>,
     #[serde(rename = "type")]
-    property_type: String,
+    property_type: Option<String>,
     #[serde(flatten)]
     pub value: HashMap<String, Value>,
 }
@@ -50,7 +50,7 @@ pub struct NftConsolidated {
     pub symbol: String,
     pub transferable: i64,
     pub sn: String,
-    pub metadata: String,
+    pub metadata: Option<String>,
     pub priority: Vec<String>,
     pub owner: String,
     pub rootowner: String,

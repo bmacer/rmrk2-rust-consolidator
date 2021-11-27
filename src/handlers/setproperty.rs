@@ -80,6 +80,8 @@ pub fn handle_setproperty(
         .get(name)
         .unwrap()
         .mutation
+        .clone()
+        .unwrap()
         .allowed
     {
         data.invalid.push(Invalid {

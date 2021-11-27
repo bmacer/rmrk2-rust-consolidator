@@ -12,6 +12,7 @@ pub struct ConsolidatedData {
     pub collections: HashMap<String, CreateConsolidated>,
     pub bases: HashMap<String, BaseConsolidated>,
     pub invalid: Vec<Invalid>,
+    #[serde(rename = "lastBlock")]
     pub last_block: i64,
 }
 
