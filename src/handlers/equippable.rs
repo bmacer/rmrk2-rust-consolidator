@@ -1,5 +1,5 @@
 pub use crate::mint::NftConsolidated;
-pub use crate::models::{ConsolidatedData, Invalid, Remark};
+pub use crate::models::{ConsolidatedData, Invalid, Remark, EquippableOption};
 use log::warn;
 
 // Fail if base doesn't exist
@@ -52,7 +52,7 @@ pub fn handle_equippable(
 
     let first_char = changes_raw.chars().next().unwrap_or(' ');
 
-    data.bases.entry(resource).and_modify(|i| {
+    data.bases.entry(resource.clone()).and_modify(|i| {
         for part in &mut i.parts {
             if part.part_type == String::from("slot") {
                 if part.id == slot {
@@ -63,7 +63,7 @@ pub fn handle_equippable(
                     // Override * for the whole list.
                     //TODO the only way to remove this would be with a -* (or overrride) which seems improper
                     if first_char == '*' {
-                        part.equippable = Some(vec![String::from("*")]);
+                        part.equippable = Some(EquippableOption::All);
                     }
                     let mut string = changes_raw.chars();
                     string.next();
@@ -74,11 +74,24 @@ pub fn handle_equippable(
                         for item in to_add.iter() {
                             match &mut part.equippable {
                                 Some(v) => {
-                                    if !v.contains(&item.to_string()) {
-                                        v.push(item.to_string())
+                                    match v {
+                                        EquippableOption::All => (),
+                                        EquippableOption::OneCollection(c) => {
+                                            if c != &item.to_string() {
+                                                part.equippable = Some(EquippableOption::Collections(vec![c.to_string(), item.to_string()]));
+                                            }
+                                        }
+                                        EquippableOption::Collections(c) => {
+                                            if !c.contains(&item.to_string()) {
+                                                c.push(item.to_string())
+                                            }
+                                        }
                                     }
+                                    
                                 }
-                                None => part.equippable = Some(vec![item.to_string()]),
+                                None => part.equippable = Some(
+                                    EquippableOption::Collections(vec![item.to_string()])
+                                ),
                             }
                         }
                         return;
@@ -88,9 +101,46 @@ pub fn handle_equippable(
                         for item in to_add.iter() {
                             match &mut part.equippable {
                                 Some(v) => {
-                                    if v.contains(&item.to_string()) {
-                                        let index = v.iter().position(|x| *x == item.to_string()).unwrap();
-                                        v.remove(index);
+                                    match v {
+                                        EquippableOption::All => {
+                                            data.invalid.push(Invalid {
+                                                op_type: String::from("EQUIPPABLE"),
+                                                block: block,
+                                                caller: caller.clone(),
+                                                object_id: resource.clone(),
+                                                message: String::from(format!(
+                                                    "[EQUIPPABLE] Cannot subtract from wildcard * equippable.  Caller {} isn't issuer of base {}",
+                                                    caller,
+                                                    resource.clone()
+                                                )),
+                                            });
+                                            return;
+                                        }
+                                        EquippableOption::OneCollection(c) => {
+                                            if c == &item.to_string() {
+                                                part.equippable = Some(EquippableOption::Collections(vec![]));
+                                            } else {
+                                                data.invalid.push(Invalid {
+                                                    op_type: String::from("EQUIPPABLE"),
+                                                    block: block,
+                                                    caller: caller.clone(),
+                                                    object_id: resource.clone(),
+                                                    message: String::from(format!(
+                                                        "[EQUIPPABLE] Collection {} not in equippables list.  Caller {} isn't issuer of base {}",
+                                                        c,
+                                                        caller,
+                                                        resource.clone()
+                                                    )),
+                                                });
+                                                return;
+                                            }
+                                        }
+                                        EquippableOption::Collections(c) => {
+                                            if c.contains(&item.to_string()) {
+                                                let index = c.iter().position(|x| *x == item.to_string()).unwrap();
+                                                c.remove(index);
+                                            }
+                                        }
                                     }
                                 }
                                 None => (),
@@ -101,16 +151,37 @@ pub fn handle_equippable(
                 
                     to_add = changes_raw.split(",").collect();
                         // Override if no other options
-                        part.equippable = Some(vec![]);
+                        part.equippable = Some(EquippableOption::Collections(vec![]));
                         for item in to_add.iter() {
                             
                             match &mut part.equippable {
                                 Some(v) => {
-                                    if !v.contains(&item.to_string()) {
-                                        v.push(item.to_string())
+                                    match v {
+                                        EquippableOption::All => {
+                                            data.invalid.push(Invalid {
+                                                op_type: String::from("EQUIPPABLE"),
+                                                block: block,
+                                                caller: caller.clone(),
+                                                object_id: resource.clone(),
+                                                message: String::from(format!(
+                                                    "[EQUIPPABLE] Cannot add to wildcard * equippable.  Caller {} isn't issuer of base {}",
+                                                    caller,
+                                                    resource.clone()
+                                                )),
+                                            });
+                                            return;
+                                        }
+                                        EquippableOption::OneCollection(_) => {
+                                            part.equippable = Some(EquippableOption::Collections(vec![item.to_string()]));
+                                        }
+                                        EquippableOption::Collections(c) => {
+                                            if !c.contains(&item.to_string()) {
+                                                c.push(item.to_string());
+                                            }
+                                        }
                                     }
-                                }
-                                None => part.equippable = Some(vec![item.to_string()]),
+                                },
+                                None => part.equippable = Some(EquippableOption::Collections(vec![item.to_string()])),
                             }
                         }
                     }

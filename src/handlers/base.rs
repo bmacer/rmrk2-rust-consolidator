@@ -1,5 +1,6 @@
 use crate::models::{ConsolidatedData, Invalid};
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::send::Change;
 
@@ -12,6 +13,18 @@ pub struct Base {
     pub media_type: String,
     pub issuer: String,
     pub parts: Vec<Part>,
+    pub themes: Option<HashMap<String, HashMap<String, String>>>,
+}
+
+/// For some reason serde won't deserialize a single item
+/// as a Vec, so I have to handle it as a single string
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EquippableOption {
+    Collections(Vec<String>),
+    OneCollection(String),
+    #[serde(rename = "*")]
+    All,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -20,7 +33,7 @@ pub struct Part {
     pub part_type: String,
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub equippable: Option<Vec<String>>,
+    pub equippable: Option<EquippableOption>,
     pub z: i32,
 }
 
@@ -34,6 +47,7 @@ pub struct BaseConsolidated {
     pub id: String,
     pub issuer: String,
     pub parts: Vec<Part>,
+    pub themes: Option<HashMap<String, HashMap<String, String>>>,
 }
 
 // rmrk::BASE::{version}::{html_encoded_json}
@@ -65,6 +79,7 @@ pub fn handle_base(raw_parts: Vec<&str>, block: i64, caller: String, data: &mut 
                 symbol: v.symbol,
                 media_type: v.media_type,
                 parts: v.parts,
+                themes: v.themes,
             };
             data.bases.entry(id).or_insert(base);
         }

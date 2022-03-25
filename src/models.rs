@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub use super::base::BaseConsolidated;
+pub use super::base::{BaseConsolidated, EquippableOption};
 pub use super::create::CreateConsolidated;
 pub use super::mint::NftConsolidated;
 // pub use super::resadd::ResourceConsolidated;
